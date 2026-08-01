@@ -1,0 +1,45 @@
+lerobot-record \
+    --robot.type=so101_follower \
+    --robot.port=/dev/tty.usbmodem5A7A0585801 \
+    --robot.id=partabot_so101_follower_1 \
+    --robot.cameras="{ overhead: {type: opencv, index_or_path: 2, width: 1920, height: 1080, fps: 30, rotation: ROTATE_180}, base: {type: opencv, index_or_path: 1, width: 1920, height: 1080, fps: 30}, wrist: {type: opencv, index_or_path: 0, width: 1920, height: 1080, fps: 30, rotation: ROTATE_180} }" \
+    --teleop.type=so101_leader \
+    --teleop.port=/dev/tty.usbmodem5A7A0554431 \
+    --teleop.id=partabot_so101_leader_1 \
+    --dataset.repo_id=klcantrell/so101_spam_musubi_slide_spam_for_pick_up_left_task_v1 \
+    --dataset.num_episodes=1 \
+    --dataset.single_task="slide spam for pick up"
+
+lerobot-record \
+    --robot.type=so101_follower \
+    --robot.port=/dev/tty.usbmodem5A7A0585801 \
+    --robot.id=partabot_so101_follower_1 \
+    --robot.cameras="{ overhead: {type: opencv, index_or_path: 2, width: 1920, height: 1080, fps: 30, rotation: ROTATE_180}, base: {type: opencv, index_or_path: 1, width: 1920, height: 1080, fps: 30}, wrist: {type: opencv, index_or_path: 0, width: 1920, height: 1080, fps: 30, rotation: ROTATE_180} }" \
+    --teleop.type=so101_leader \
+    --teleop.port=/dev/tty.usbmodem5A7A0554431 \
+    --teleop.id=partabot_so101_leader_1 \
+    --dataset.repo_id=klcantrell/so101_spam_musubi_slide_spam_for_pick_up_left_task_v1 \
+    --dataset.num_episodes=1 \
+    --dataset.single_task="slide spam for pick up" \
+    --dataset.push_to_hub=True \
+    --dataset.root=/Users/klcantrell/.cache/huggingface/lerobot/klcantrell/so101_spam_musubi_slide_spam_for_pick_up_left_task_v1 \
+    --resume=True
+    
+lerobot-teleoperate \
+    --robot.type=so101_follower \
+    --robot.port=/dev/tty.usbmodem5A7A0585801 \
+    --robot.id=partabot_so101_follower_1 \
+    --teleop.type=so101_leader \
+    --teleop.port=/dev/tty.usbmodem5A7A0554431 \
+    --teleop.id=partabot_so101_leader_1
+
+lerobot-dataset-viz \
+    --repo-id=klcantrell/so101_spam_musubi_slide_spam_for_pick_up_left_task_v1 \
+    --episode-index=0
+
+lerobot-edit-dataset \
+    --repo_id klcantrell/so101_spam_musubi_slide_spam_for_pick_up_left_task_v1 \
+    --new_repo_id klcantrell/so101_spam_musubi_slide_spam_for_pick_up_left_task_v2 \
+    --operation.type delete_episodes \
+    --operation.episode_indices "[11]" \
+    --push_to_hub true

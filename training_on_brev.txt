@@ -1,0 +1,73 @@
+export HF_DATASET_REPO_ID="klcantrell/so101_spam_musubi_pick_and_place_spam_left_task_v2"
+export HF_USER_NAME="klcantrell"
+export HF_MODEL_REPO="grootn16-finetune-so101_spam_musubi_pick_and_place_spam_left_task"
+
+export CONVERSION_ROOT="lerobot_v3_to_v2_converted_data"
+export DATASET_DIR="${CONVERSION_ROOT}/${HF_DATASET_REPO_ID}"
+
+cd Isaac-GR00T
+
+uv run --project scripts/lerobot_conversion python scripts/lerobot_conversion/convert_v3_to_v2.py \
+    --repo-id "${HF_DATASET_REPO_ID}" \
+    --root "${CONVERSION_ROOT}"
+
+cp examples/SO100/modality.json "${DATASET_DIR}/meta/"
+
+# modify modality json file and python script to match the dataset's base, wrist, and overhead key names
+
+source "/home/ubuntu/Isaac-GR00T/.venv/bin/activate"
+
+export NUM_GPUS=1
+export CUDA_VISIBLE_DEVICES=0
+export EMBODIMENT_TAG="NEW_EMBODIMENT"
+export RUN_NAME="so101_spam_musubi_pick_and_place_spam_left_task"
+export OUTPUT_DIR="/ephemeral/${RUN_NAME}"
+
+# initial training script
+
+python gr00t/experiment/launch_finetune.py \
+    --base_model_path nvidia/GR00T-N1.6-3B \
+    --dataset_path "${DATASET_DIR}" \
+    --modality_config_path examples/SO100/so100_config.py \
+    --embodiment_tag "${EMBODIMENT_TAG}" \
+    --num_gpus "${NUM_GPUS}" \
+    --output_dir "${OUTPUT_DIR}" \
+    --save_steps 5000 \
+    --save_total_limit 5 \
+    --max_steps 20000 \
+    --warmup_ratio 0.05 \
+    --weight_decay 1e-5 \
+    --learning_rate 1e-4 \
+    --global_batch_size 64 \
+    --color_jitter_params brightness 0.3 contrast 0.4 saturation 0.5 hue 0.08 \
+    --dataloader_num_workers 4
+
+
+# upload model
+
+hf auth login
+hf repo create "${HF_MODEL_REPO}" --repo-type model --exist-ok
+hf upload "${HF_MODEL_REPO}" "${OUTPUT_DIR}" . --repo-type model
+
+
+# resume training
+
+hf download "${HF_USER_NAME}/${HF_MODEL_REPO}" --local-dir ~/recovered_checkpoints
+cp -r ~/recovered_checkpoints/checkpoint-10000 $OUTPUT_DIR/checkpoint-10000
+
+python gr00t/experiment/launch_finetune.py \
+    --base_model_path ~/recovered_checkpoints/checkpoint-10000 \
+    --dataset_path "${DATASET_DIR}" \
+    --modality_config_path examples/SO100/so100_config.py \
+    --embodiment_tag "${EMBODIMENT_TAG}" \
+    --num_gpus "${NUM_GPUS}" \
+    --output_dir "${OUTPUT_DIR}" \
+    --save_steps 5000 \
+    --save_total_limit 5 \
+    --max_steps 20000 \
+    --warmup_ratio 0.05 \
+    --weight_decay 1e-5 \
+    --learning_rate 1e-4 \
+    --global_batch_size 64 \
+    --color_jitter_params brightness 0.3 contrast 0.4 saturation 0.5 hue 0.08 \
+    --dataloader_num_workers 4

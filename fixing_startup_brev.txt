@@ -1,0 +1,20 @@
+# Step 0: Remove initial Isaac-GR00T
+rm -rf Isaac-GR00T
+# then rerun startup.sh
+
+# Step 1: Clean out the .bashrc override
+# The script appended a broken library path to your user profile. Let's strip it out. Run this command to remove that specific line from your ~/.bashrc:
+sed -i '\/usr\/local\/cuda-12.8\/compat/d' ~/.bashrc
+
+# Step 2: Purge the conflicting compatibility package
+# Now, uninstall the package that is breaking your native 580.x drivers:
+sudo apt-get remove --purge -y cuda-compat-12-8
+
+# Step 3: Wipe the variable from your current session
+# The bad LD_LIBRARY_PATH is still active in your current terminal window. Reset it completely by forcing a clean reload of your profile:
+unset LD_LIBRARY_PATH
+source ~/.bashrc
+
+# verify fix
+source "/home/ubuntu/Isaac-GR00T/.venv/bin/activate"
+python -c "import torch; print('Is CUDA available?:', torch.cuda.is_available()); print('GPU Detected:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'None')"
