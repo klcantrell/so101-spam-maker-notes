@@ -1,3 +1,5 @@
+# Choose Scaleway (leave as H100) for provider for launchable (link https://brev.nvidia.com/launchable/deploy?launchableID=env-3DfuAZZiLMXlclVQt1ddp0fEsOH). Works better than Nebius currently.
+
 # Step 0: Remove initial Isaac-GR00T
 rm -rf Isaac-GR00T
 # then rerun startup.sh

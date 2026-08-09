@@ -1,0 +1,43 @@
+# Choose L4 on Scaleway for provider for launchable (link https://brev.nvidia.com/launchable/deploy?launchableID=env-3DfuAZZiLMXlclVQt1ddp0fEsOH).
+# Works better than Nebius currently.
+
+# locally, set up port forwarding to brev
+brev port-forward <instance_name> -p 5555:5555
+
+# on the brev instance, download model
+
+export HF_USER_NAME="klcantrell"
+export HF_MODEL_REPO="grootn16-finetune-so101_spam_musubi_pick_and_place_spam_left_task"
+
+cd Isaac-GR00T
+source ".venv/bin/activate"
+
+hf auth login
+hf download "${HF_USER_NAME}/${HF_MODEL_REPO}" --local-dir ~/model_checkpoints
+
+# on the brev instance, run the server
+
+# modify modality  python script to match the dataset's base, wrist, and overhead key names
+
+export EMBODIMENT_TAG="NEW_EMBODIMENT"
+
+uv run python gr00t/eval/run_gr00t_server.py \
+  --embodiment-tag "${EMBODIMENT_TAG}" \
+  --modality_config_path examples/SO100/so100_config.py \
+  --model-path ~/model_checkpoints/checkpoint-20000 \
+  --device cuda:0 \
+  --host 0.0.0.0 \
+  --port 5555
+
+# locally, run client script
+
+export EMBODIMENT_TAG="NEW_EMBODIMENT"
+
+python gr00t_client/eval_so101.py \
+  --robot.type=so101_follower \
+  --robot.port=/dev/tty.usbmodem5A7A0585801 \
+  --robot.id=partabot_so101_follower_1 \
+  --robot.cameras="{ overhead: {type: opencv, index_or_path: 2, width: 1920, height: 1080, fps: 30, rotation: ROTATE_180}, base: {type: opencv, index_or_path: 1, width: 1920, height: 1080, fps: 30}, wrist: {type: opencv, index_or_path: 0, width: 1920, height: 1080, fps: 30, rotation: ROTATE_180} }" \
+  --policy_host=localhost \
+  --policy_port=5555 \
+  --lang_instruction="pick and place spam"

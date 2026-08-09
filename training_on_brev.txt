@@ -53,10 +53,11 @@ hf upload "${HF_MODEL_REPO}" "${OUTPUT_DIR}" . --repo-type model
 # resume training
 
 hf download "${HF_USER_NAME}/${HF_MODEL_REPO}" --local-dir ~/recovered_checkpoints
-cp -r ~/recovered_checkpoints/checkpoint-10000 $OUTPUT_DIR/checkpoint-10000
+mkdir -p $OUTPUT_DIR
+cp -r ~/recovered_checkpoints/checkpoint-15000 $OUTPUT_DIR
 
 python gr00t/experiment/launch_finetune.py \
-    --base_model_path ~/recovered_checkpoints/checkpoint-10000 \
+    --base_model_path ~/recovered_checkpoints/checkpoint-15000 \
     --dataset_path "${DATASET_DIR}" \
     --modality_config_path examples/SO100/so100_config.py \
     --embodiment_tag "${EMBODIMENT_TAG}" \
