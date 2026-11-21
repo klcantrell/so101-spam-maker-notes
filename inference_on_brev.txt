@@ -31,13 +31,11 @@ uv run python gr00t/eval/run_gr00t_server.py \
 
 # locally, run client script
 
-export EMBODIMENT_TAG="NEW_EMBODIMENT"
-
 python gr00t_client/eval_so101.py \
   --robot.type=so101_follower \
   --robot.port=/dev/tty.usbmodem5A7A0585801 \
   --robot.id=partabot_so101_follower_1 \
-  --robot.cameras="{ overhead: {type: opencv, index_or_path: 2, width: 1920, height: 1080, fps: 30, rotation: ROTATE_180}, base: {type: opencv, index_or_path: 1, width: 1920, height: 1080, fps: 30}, wrist: {type: opencv, index_or_path: 0, width: 1920, height: 1080, fps: 30, rotation: ROTATE_180} }" \
+  --robot.cameras="{ overhead: {type: opencv, index_or_path: 2, width: 640, height: 360, fps: 30, rotation: ROTATE_180}, base: {type: opencv, index_or_path: 1, width: 640, height: 360, fps: 30}, wrist: {type: opencv, index_or_path: 0, width: 640, height: 360, fps: 30, rotation: ROTATE_180} }" \
   --policy_host=localhost \
   --policy_port=5555 \
   --lang_instruction="pick and place spam"

@@ -1,8 +1,11 @@
 export HF_DATASET_REPO_ID="klcantrell/so101_spam_musubi_pick_and_place_spam_left_task_v2"
 export HF_USER_NAME="klcantrell"
-export HF_MODEL_REPO="grootn16-finetune-so101_spam_musubi_pick_and_place_spam_left_task"
+export HF_MODEL_REPO="grootn16-finetune-so101_spam_musubi_pick_and_place_spam_left_task-v2"
 
-export CONVERSION_ROOT="lerobot_v3_to_v2_converted_data"
+# keep the converted dataset on the local NVMe (/ephemeral) rather than the home disk, which may be network storage
+# /ephemeral doesn't survive a new or restarted instance, so rerun the conversion each time
+# check what backs each disk with: df -h ~ /ephemeral
+export CONVERSION_ROOT="/ephemeral/lerobot_v3_to_v2_converted_data"
 export DATASET_DIR="${CONVERSION_ROOT}/${HF_DATASET_REPO_ID}"
 
 cd Isaac-GR00T
@@ -12,6 +15,34 @@ uv run --project scripts/lerobot_conversion python scripts/lerobot_conversion/co
     --root "${CONVERSION_ROOT}"
 
 cp examples/SO100/modality.json "${DATASET_DIR}/meta/"
+
+# OPTIONAL: skip this section (through the meta/info.json edits) when testing the /ephemeral change on its own
+# downscale videos before training (1080p decode is the main data-loading bottleneck)
+# 1920x1080 -> 640x360 keeps the 16:9 aspect ratio, so objects aren't stretched relative to what the
+# pretrained model saw (GR00T's own preprocessing resizes by shortest edge and preserves aspect ratio)
+# camera width/height in the inference command (inference_on_brev.txt) must be set to the same 640x360
+# only run once per converted dataset; re-running re-encodes again
+
+# .mp4 is only the container; this prints the codec inside it, which should be av1
+ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of csv=p=0 \
+    "$(find "${DATASET_DIR}/videos" -name '*.mp4' | head -1)"
+
+if ! ffmpeg -hide_banner -encoders 2>/dev/null | grep -q libsvtav1; then
+    echo "ffmpeg is missing the libsvtav1 encoder needed to keep the AV1 codec" >&2
+fi
+
+find "${DATASET_DIR}/videos" -name '*.mp4' -print0 | \
+    xargs -0 -P 4 -I{} sh -c '
+        ffmpeg -y -i "$1" -vf scale=640:360 -c:v libsvtav1 -f mp4 "$1.tmp" && mv "$1.tmp" "$1"
+    ' _ {}
+
+# update the video metadata in meta/info.json to match the resized files
+# for each camera under "features" (observation.images.base, .wrist, .overhead):
+#   "shape": [1080, 1920, 3]  ->  [360, 640, 3]   (order follows "names": height, width, channels)
+#   "video.height": 1080      ->  360
+#   "video.width": 1920       ->  640
+# leave everything else as is; "video.codec" should already say "av1"
+# older datasets name the inner block "video_info" instead of "info"; the fields are the same
 
 # modify modality json file and python script to match the dataset's base, wrist, and overhead key names
 
