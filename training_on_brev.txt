@@ -71,7 +71,7 @@ python gr00t/experiment/launch_finetune.py \
     --learning_rate 1e-4 \
     --global_batch_size 64 \
     --color_jitter_params brightness 0.3 contrast 0.4 saturation 0.5 hue 0.08 \
-    --dataloader_num_workers 4
+    --dataloader_num_workers 6
 
 
 # upload model
@@ -83,12 +83,12 @@ hf upload "${HF_MODEL_REPO}" "${OUTPUT_DIR}" . --repo-type model
 
 # resume training
 
-hf download "${HF_USER_NAME}/${HF_MODEL_REPO}" --local-dir ~/recovered_checkpoints
+hf download "${HF_USER_NAME}/${HF_MODEL_REPO}" --local-dir /ephemeral/recovered_checkpoints
 mkdir -p $OUTPUT_DIR
-cp -r ~/recovered_checkpoints/checkpoint-15000 $OUTPUT_DIR
+cp -r /ephemeral/recovered_checkpoints/checkpoint-15000 $OUTPUT_DIR
 
 python gr00t/experiment/launch_finetune.py \
-    --base_model_path ~/recovered_checkpoints/checkpoint-15000 \
+    --base_model_path /ephemeral/recovered_checkpoints/checkpoint-15000 \
     --dataset_path "${DATASET_DIR}" \
     --modality_config_path examples/SO100/so100_config.py \
     --embodiment_tag "${EMBODIMENT_TAG}" \
@@ -102,4 +102,4 @@ python gr00t/experiment/launch_finetune.py \
     --learning_rate 1e-4 \
     --global_batch_size 64 \
     --color_jitter_params brightness 0.3 contrast 0.4 saturation 0.5 hue 0.08 \
-    --dataloader_num_workers 4
+    --dataloader_num_workers 6
